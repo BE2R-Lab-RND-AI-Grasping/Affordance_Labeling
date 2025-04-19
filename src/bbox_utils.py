@@ -65,3 +65,18 @@ def get_total_bounding_box(image:np.ndarray, background_white=False, vis=False):
         cv2.destroyAllWindows() # Convert points to integer
 
     return bbox
+
+
+def distance_to_bbox(points_x, points_y, bbox):
+    x_min, y_min, x_max, y_max = bbox
+    # Calculate the distance from each point to the bounding box
+    distances = []
+    for x, y in zip(points_x, points_y):
+        if (x_min <= x <= x_max) and (y_min <= y <= y_max):
+            distances.append(0.0)
+        else:
+            dx = max(x_min - x, 0) if x < x_min else max(x - x_max, 0)
+            dy = max(y_min - y, 0) if y < y_min else max(y - y_max, 0)
+            distance = np.sqrt(dx**2 + dy**2)
+            distances.append(distance)
+    return np.array(distances)

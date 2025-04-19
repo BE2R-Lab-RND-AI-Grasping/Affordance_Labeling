@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 import cv2
 from copy import deepcopy
-
+from src import bbox_utils
 _model = None
 
 
@@ -11,12 +11,12 @@ def get_model():
     global _model
     if _model is None:
         mp_hands = mp.solutions.hands
-        _model = mp_hands.Hands(static_image_mode=True, max_num_hands=1,
-                                min_detection_confidence=0.5, min_tracking_confidence=0.3)
+        _model = mp_hands.Hands(static_image_mode=True, max_num_hands=2,
+                                min_detection_confidence=0.4, min_tracking_confidence=0.3)
     return _model
 
 
-def get_hand_bbox(image, vis=False):
+def get_hand_bbox(image, image_bbox, vis=False):
     """Return hand bounding box. 
 
     Args:
@@ -32,6 +32,7 @@ def get_hand_bbox(image, vis=False):
     mp_drawing = mp.solutions.drawing_utils
     mp_hands = mp.solutions.hands
     # landmarks are the 21 points on the hand
+    mean_distance = np.inf
     if results_mediapipe.multi_hand_landmarks:
         for hand_landmarks in results_mediapipe.multi_hand_landmarks:
             # Get bounding box coordinates
@@ -39,8 +40,10 @@ def get_hand_bbox(image, vis=False):
                         for lm in hand_landmarks.landmark]
             y_coords = [lm.y * image.shape[0]
                         for lm in hand_landmarks.landmark]
-            x_min, x_max = int(min(x_coords)), int(max(x_coords))
-            y_min, y_max = int(min(y_coords)), int(max(y_coords))
+            distance = bbox_utils.distance_to_bbox(x_coords, y_coords, image_bbox).mean()
+            if distance < mean_distance:
+                x_min, x_max = int(min(x_coords)), int(max(x_coords))
+                y_min, y_max = int(min(y_coords)), int(max(y_coords))
             if vis:
                 mp_drawing.draw_landmarks(
                     image,
