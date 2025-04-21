@@ -17,3 +17,21 @@ The idea is to estimate the object position in the image.
 6. Move the hand area to the model.
 7. Optional: think about the way to get more points using the information from the mediapipe, object opposite view or something else, basically do not simply consider the projection.
 
+
+The code should have the 4 main components:
+- the render generator
+- scene processing 
+- render searcher
+- point cloud builder
+
+
+Render generator:
+I set the camera at a position that is far enough from the object and rotate the object to get different angles. The rotation is set by a vector in the object coordinates that I align this the global z axis. I also rotate the object around the global z axis. 
+Do I need to save depth images or I can get one after the search.
+
+
+Scene processing:
+The GroundingDINO model performs rather good, at least for hammers. It finds the bounding box to focus the next steps. 
+The mediapipe model have several issues. It can find the wrong hand - currently I am trying to force it to find the hand that is closer to the bounding box of the object. 
+The SAM model is trying to segment all the objects in the bounding box - therefore it han sometimes segment the wrong object. I can try to segment several objects try to search render for all of them and pick the best of the bests, hoping that it would be the desired object.
+

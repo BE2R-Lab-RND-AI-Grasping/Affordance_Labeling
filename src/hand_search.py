@@ -41,9 +41,11 @@ def get_hand_bbox(image, image_bbox, vis=False):
             y_coords = [lm.y * image.shape[0]
                         for lm in hand_landmarks.landmark]
             distance = bbox_utils.distance_to_bbox(x_coords, y_coords, image_bbox).mean()
+            # the final hand_bbox is the one with the smallest distance to the image_bbox
             if distance < mean_distance:
                 x_min, x_max = int(min(x_coords)), int(max(x_coords))
                 y_min, y_max = int(min(y_coords)), int(max(y_coords))
+                mean_distance = distance
             if vis:
                 mp_drawing.draw_landmarks(
                     image,
@@ -52,16 +54,20 @@ def get_hand_bbox(image, image_bbox, vis=False):
                     mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2),  # Landmark color
                     mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)   # Connection color
                 )
+    
+        if vis:
+            cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+            cv2.imshow("1. Hand Detection (MediaPipe)", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            # vis_image = Image.fromarray(image)
+            # draw = ImageDraw.Draw(vis_image)
+            # box = [x_min, y_min, x_max, y_max]
+            # draw.rectangle(box, outline="red", width=3)
+            # vis_image.show()
+        return np.asarray([x_min, y_min, x_max, y_max])
+    else:
+        print("No hands detected.")
+        return None
 
-    if vis:
-        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-        cv2.imshow("1. Hand Detection (MediaPipe)", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        # vis_image = Image.fromarray(image)
-        # draw = ImageDraw.Draw(vis_image)
-        # box = [x_min, y_min, x_max, y_max]
-        # draw.rectangle(box, outline="red", width=3)
-        # vis_image.show()
-
-    return np.asarray([x_min, y_min, x_max, y_max])
+    
