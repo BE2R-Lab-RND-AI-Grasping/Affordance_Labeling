@@ -18,7 +18,7 @@ def process_scene_image(image_path: Path, object_class: str):
         return None, None
     # Select the best bounding box based on the score
     best_bbox = bboxes[np.argmax(np.asarray(scores))]
-    hand_bbox = hand_search.get_hand_bbox(scene_image, best_bbox, vis=True)
+    hand_bbox = hand_search.get_hand_bbox(scene_image, best_bbox, vis=False)
     if hand_bbox is None:
         print(f"No hand bounding box found for {object_class} in {image_path}.")
         return None, None
