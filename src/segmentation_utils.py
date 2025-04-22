@@ -11,6 +11,7 @@ def get_model_and_preprocess_sam():
     global _model_sam, _processor_sam
     if _model_sam is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cpu"
         model_id = "facebook/sam-vit-huge"
         _processor_sam = SamProcessor.from_pretrained(model_id)
         _model_sam = SamModel.from_pretrained(model_id).to(device)
@@ -20,6 +21,7 @@ def get_model_and_preprocess_sam():
 
 def get_masks_sam(image, bbox):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cpu"
     model, processor = get_model_and_preprocess_sam()
     # the SAM model expects a PIL image and a list of bounding boxes
     image = Image.fromarray(image)

@@ -8,6 +8,7 @@ from pathlib import Path
 from copy import deepcopy
 from src import bbox_utils
 from src import object_detection
+import json
 
 
 def get_rotation_to_z(source_vector):
@@ -186,8 +187,10 @@ def comparison_score(template: np.ndarray, target: np.ndarray, mask_color=np.arr
     gray_target = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
     # Invert threshold: detect gray object on white background
     # Threshold the image to separate foreground from background
+    # _, thresh_target = cv2.threshold(
+    #     gray_target, 240, 255, cv2.THRESH_BINARY_INV)
     _, thresh_target = cv2.threshold(
-        gray_target, 240, 255, cv2.THRESH_BINARY_INV)
+        gray_target, 100, 255, cv2.THRESH_BINARY)
     _, thresh_template = cv2.threshold(
         gray_template, 100, 255, cv2.THRESH_BINARY)
     thresh_target[mask] = 0
@@ -219,7 +222,7 @@ def get_multiview_renders(mesh, render_dir: Path):
                 path, _, _ = get_render(direction, rot, mesh, render_dir, render_numeration)
                 direction.append(rot)
                 directions.append(direction)
-                path_list.append(path)
+                path_list.append(str(path.absolute()))
                 render_numeration += 1
         else:
             for azimuth in azimuth_samples:
@@ -228,12 +231,16 @@ def get_multiview_renders(mesh, render_dir: Path):
                     path, _, _ = get_render(direction, rot, mesh, render_dir, render_numeration)
                     direction.append(rot)
                     directions.append(direction)
-                    path_list.append(path)
+                    path_list.append(str(path.absolute()))
                     render_numeration += 1
     # render_iter = render_dir.glob("render_*")
     # path_list = list(render_iter)
     # print(len(path_list))
     np.save(render_dir/"directions.npy", np.array(directions))
+    filename = str(render_dir.absolute())+"/filelist.json"
+    with open(filename, 'w') as f:
+        json.dump(path_list, f)
+
     return path_list, directions
 
 
@@ -241,7 +248,7 @@ def get_best_render_match(path_list, scene_results):
     hand_bbox = scene_results["hand_bbox"]
     object_mask = scene_results["image"]
     image = bbox_utils.add_bbox_to_image(object_mask, hand_bbox)
-    bbox = bbox_utils.get_total_bounding_box(image, background_white=True)
+    bbox = bbox_utils.get_total_bounding_box(image, background_white=False)
     croped_image_scene = bbox_utils.crop_bbox_cv2(image, bbox)
     max_score = -np.inf
     max_ind = -1
@@ -250,7 +257,7 @@ def get_best_render_match(path_list, scene_results):
     max_bbox = None
     best_image = None
     for i, path in enumerate(path_list):
-        image = cv2.imread(path)
+        image = cv2.imread(Path(path))
         bbox = object_detection.detect_object_with_opencv(image, vis=False)
         croped_image = bbox_utils.crop_bbox_cv2(image, bbox)
         score, mask = comparison_score(croped_image, croped_image_scene)
@@ -273,23 +280,29 @@ def calculate_mask_from_cropped_bbox(bbox_in_cropped_image, mask, image):
 
 
 def scene_matching(scene_dir: Path, render_dir, result_dir: Path, mesh: o3d.geometry.TriangleMesh):
-    render_iter = render_dir.glob("render_*")
-    path_list = list(render_iter)
+    # render_iter = render_dir.glob("render_*")
+    # path_list = list(render_iter)
+    with open(render_dir/"filelist.json", 'r') as f:
+        path_list = json.load(f)
     directions = np.load(render_dir / "directions.npy")
     scene_file_list = list(scene_dir.glob("*.npz"))
     n = 0
+    file_list = []
     for file in scene_file_list:
         scene_results = np.load(file)
+        file_list.append(str(file.absolute()))
         best_image, render_path, max_ind, max_bbox, cropped, max_mask, score = get_best_render_match(
             path_list, scene_results)
         # save the results
         x_min, y_min, x_max, y_max = max_bbox
-        initial_mask = np.zeros(best_image.shape[:2])
-        initial_mask[y_min:y_max+1, x_min:x_max+1] = max_mask
-        depth_path = render_path.parent /render_path.name.replace("render", "depth")
+        # initial_mask = np.zeros(best_image.shape[:2])
+        # initial_mask[y_min:y_max+1, x_min:x_max+1] = max_mask
+        # depth_path = render_path.parent/render_path.name.replace("render", "depth")
         direction, rot = directions[max_ind][:-1], directions[max_ind][-1]
         depth, _, _ = get_depth_render(direction, rot, mesh, result_dir, n)
         depth_mask = calculate_mask_from_cropped_bbox(max_bbox, max_mask, best_image)
         np.save(result_dir/(f"depth_mask_{n}.npy"), depth_mask)
         n += 1
-
+    filename = str(result_dir.absolute())+"/scenefilelist.json"
+    with open(filename, 'w') as f:
+        json.dump(file_list, f)
