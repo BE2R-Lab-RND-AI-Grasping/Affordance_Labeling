@@ -110,7 +110,52 @@ def get_single_color_pcs(color_labeled_pc: o3d.geometry.PointCloud):
 
     return pcs,  colors_list
 
-def create_pc_from_masked_depth(depth_image_path, mask):
-    depth = o3d.io.read_image(depth_image_path)
-    depth = 
-    o3d.geometry.PointCloud.create_from_depth_image()
+# def create_pc_from_masked_depth(depth_image_path, mask):
+#     depth = o3d.io.read_image(depth_image_path)
+#     o3d.geometry.PointCloud.create_from_depth_image()
+
+from src import object_render
+def rotate_back(direction, angle, pcd:o3d.geometry.PointCloud):
+    rot_to_z = object_render.get_rotation_to_z(direction)
+    rot_around_z = object_render.get_rotation_around_z(angle)
+
+    pcd.rotate(np.linalg.inv(rot_around_z), center=(0, 0, 0))
+    pcd.rotate(np.linalg.inv(rot_to_z), center=(0, 0, 0))
+
+
+def create_masked_depths(depth_dir):
+    n=0
+    while Path(depth_dir/(f"depth_{n}.png")).exists():
+        file_name = depth_dir/(f"depth_{n}.png")
+        depth_mask_file_name = depth_dir/(f"depth_mask_{n}.npy")
+        depth = o3d.io.read_image(file_name)
+        depth_mask = np.load(depth_mask_file_name)
+        mask = depth_mask.astype("bool")
+        depth_array = np.asarray(depth)
+        masked_depth_array = depth_array * mask
+        o3d.io.write_image(depth_dir/(f"masked_depth_{n}.png"),o3d.geometry.Image(masked_depth_array))
+        n+=1
+    
+def create_pc_from_masked_depth(depth_image_masked, direction, rot, camera_params):
+    labeling_pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_image_masked, depth_scale=10, intrinsic=camera_params.intrinsic, extrinsic=camera_params.extrinsic, depth_trunc=1000.0)
+    labeling_pcd.paint_uniform_color([1, 0, 0])
+    # labeling_pcd.paint_uniform_color(np.random.rand(3))
+    rotate_back(direction, rot, labeling_pcd)
+    return labeling_pcd
+
+def process_masked_depths(depth_dir, directions, idx_list,camera_params):
+    n=0
+    result_pcd = o3d.geometry.PointCloud()
+    result_pcds = [] 
+    while Path(depth_dir/(f"masked_depth_{n}.png")).exists():
+        file_name = depth_dir/(f"masked_depth_{n}.png")
+        depth_image_masked = o3d.io.read_image(file_name)
+        max_ind = idx_list[n]
+        direction, rot = directions[max_ind][:-1], directions[max_ind][-1]
+        pcd = create_pc_from_masked_depth(depth_image_masked, direction, rot, camera_params)
+        result_pcd += pcd
+        result_pcds.append(pcd)
+        n+=1
+    return result_pcd, result_pcds
+
+

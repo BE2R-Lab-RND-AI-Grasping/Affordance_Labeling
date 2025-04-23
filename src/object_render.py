@@ -120,7 +120,7 @@ def get_render(direction_vector, angle, input_mesh: o3d.geometry.TriangleMesh, d
 
     vis.destroy_window()
 
-    return render_path, params.extrinsic, params.intrinsic
+    return render_path, params
 
 
 def get_depth_render(direction_vector, angle, input_mesh: o3d.geometry.TriangleMesh, dir=Path("./"), render_numeration = None):
@@ -219,7 +219,7 @@ def get_multiview_renders(mesh, render_dir: Path):
         if elevation == 0 or elevation == 180:
             for rot in rotation_samples:
                 direction = [0, 0, np.cos(np.radians(elevation))]
-                path, _, _ = get_render(direction, rot, mesh, render_dir, render_numeration)
+                path, params = get_render(direction, rot, mesh, render_dir, render_numeration)
                 direction.append(rot)
                 directions.append(direction)
                 path_list.append(str(path.absolute()))
@@ -228,7 +228,7 @@ def get_multiview_renders(mesh, render_dir: Path):
             for azimuth in azimuth_samples:
                 for rot in rotation_samples:
                     direction = [np.cos(np.radians(azimuth))*np.sin(np.radians(elevation)), np.sin(np.radians(azimuth))*np.sin(np.radians(elevation)), np.cos(np.radians(elevation))]
-                    path, _, _ = get_render(direction, rot, mesh, render_dir, render_numeration)
+                    path, _ = get_render(direction, rot, mesh, render_dir, render_numeration)
                     direction.append(rot)
                     directions.append(direction)
                     path_list.append(str(path.absolute()))
@@ -236,6 +236,7 @@ def get_multiview_renders(mesh, render_dir: Path):
     # render_iter = render_dir.glob("render_*")
     # path_list = list(render_iter)
     # print(len(path_list))
+    o3d.io.write_pinhole_camera_parameters(render_dir/"camera_params.json", params)
     np.save(render_dir/"directions.npy", np.array(directions))
     filename = str(render_dir.absolute())+"/filelist.json"
     with open(filename, 'w') as f:
@@ -287,6 +288,7 @@ def scene_matching(scene_dir: Path, render_dir, result_dir: Path, mesh: o3d.geom
     directions = np.load(render_dir / "directions.npy")
     scene_file_list = list(scene_dir.glob("*.npz"))
     n = 0
+    max_ind_list = []
     file_list = []
     for file in scene_file_list:
         scene_results = np.load(file)
@@ -303,6 +305,10 @@ def scene_matching(scene_dir: Path, render_dir, result_dir: Path, mesh: o3d.geom
         depth_mask = calculate_mask_from_cropped_bbox(max_bbox, max_mask, best_image)
         np.save(result_dir/(f"depth_mask_{n}.npy"), depth_mask)
         n += 1
+        max_ind_list.append(max_ind)
     filename = str(result_dir.absolute())+"/scenefilelist.json"
+
     with open(filename, 'w') as f:
         json.dump(file_list, f)
+
+    np.save(result_dir/"max_ind_list.npy", np.array(max_ind_list))
