@@ -32,7 +32,15 @@ The model is used to generate renders from different view points and camera angl
 - `filelist.json` for storing the list of paths to the render files
 - renders from different directions
 
+<img src="./assets/1.png" width="45%"/> <img src="./assets/2.png" width="45%"/>
+<img src="./assets/3.png" width="45%"/> <img src="./assets/4.png" width="45%"/>
+
 ### Scene processing
-Scenes are the images of the object usage. For each scene we use several pretrained networks to find the area of the hand-object interaction. As a first step we use GroundingDINO with object name prompt to find the bounding box of the object in the scene. Then we use the MediaPipe for hand detection and build the hand bounding box. Finally the SAM model is applied to get the segmentation mask of the object, using the bounding box created by GroundingDINO.  
+Scenes are the images of the object usage. For each scene we use several pretrained networks to find the area of the hand-object interaction. As a first step we use GroundingDINO with object name prompt to find the bounding box of the object in the scene. Then we use the MediaPipe for hand detection and build the hand bounding box. Finally the SAM model is applied to get the segmentation mask of the object, using the bounding box created by GroundingDINO. 
+
+GroundingDINO example:
+
+
+
 
 
