@@ -35,3 +35,13 @@ The GroundingDINO model performs rather good, at least for hammers. It finds the
 The mediapipe model have several issues. It can find the wrong hand - currently I am trying to force it to find the hand that is closer to the bounding box of the object. 
 The SAM model is trying to segment all the objects in the bounding box - therefore it han sometimes segment the wrong object. I can try to segment several objects try to search render for all of them and pick the best of the bests, hoping that it would be the desired object.
 
+
+
+TODO:
+1. Algorithm for point cloud refinement to make the labels smooth.
+2. Increase the usage of mediapipe to get labels for functional areas and handaling areas. Use the depth estimation and try to build mask for opposite direction or use some other symmetry of the object.
+3. Consider the hand mask building with something more than bounding box.
+4. Consider the translations in render building
+5. Try other methods in the render/scene comparison.
+ 
+
