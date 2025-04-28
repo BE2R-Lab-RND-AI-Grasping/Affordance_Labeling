@@ -39,8 +39,9 @@ The model is used to generate renders from different view points and camera angl
 Scenes are the images of the object usage. For each scene we use several pretrained networks to find the area of the hand-object interaction. As a first step we use GroundingDINO with object name prompt to find the bounding box of the object in the scene. Then we use the MediaPipe for hand detection and build the hand bounding box. Finally the SAM model is applied to get the segmentation mask of the object, using the bounding box created by GroundingDINO. 
 
 GroundingDINO example:
-
-
+<img src="./assets/dino_result.jpg" width="75%"/>
+MediaPipe example:
+ 
 
 
 
