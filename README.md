@@ -1,4 +1,4 @@
-# Semantic_Object_Segmentation_for_Affordance_Labeling
+# Affordance_Labeling
 
 The tool for labeling of the 3D models using the images of the object usage. 
 
