@@ -66,7 +66,7 @@ Each render is encoded as the direction vector from the center of the object and
 
 For each model the partial point cloud is derived from each scene where the models found all the required parts. The total point cloud is the union of partial point clounds:
 
-<img src="./assets/point_cloud_total.png" width="20%"/> <img src="./assets/pc_cup_total.png" width="20%"/> <img src="./assets/screwdriver.png" width="20%"/> <img src="./assets/drill.png" width="20%"/> <img src="./assets/wrench.png" width="20%"/>
+<img src="./assets/point_cloud_total.png" width="19%"/> <img src="./assets/pc_cup_total.png" width="19%"/> <img src="./assets/screwdriver.png" width="19%"/> <img src="./assets/drill.png" width="19%"/> <img src="./assets/wrench.png" width="19%"/>
 
 
 ## Acknowledgments
